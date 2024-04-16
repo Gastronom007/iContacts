@@ -9,9 +9,12 @@ import UIKit
 
 class ViewController: UIViewController {
     
+    var storage: ContactStorageProtocol!
+ 
     private var contacts = [ContactProtocol]() {
         didSet {
             contacts.sort{ $0.title < $1.title }
+            storage.save(contacts: contacts)
         }
     }
     
@@ -19,23 +22,22 @@ class ViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        storage = ContactStorage()
         loadContacts()
+
     }
     
     private func loadContacts() {
-        contacts.append(Contact(title: "Baila Wilcox", phone: "+7999123123123"))
-        contacts.append(Contact(title: "Jake Powell", phone: "+7999458654231"))
-        contacts.append(Contact(title: "Goldie Dickinson", phone: "+7949127712312"))
+        contacts = storage.load()
     }
     
     @IBAction func showNewContactAlert() {
         
-        let alertController = UIAlertController(title: "Add new contact", message: "Add name and phone", preferredStyle: .alert)
+        let alertController = UIAlertController(title: "Create new contact", message: "Add name and phone", preferredStyle: .alert)
         
         alertController.addTextField { textField in
             textField.placeholder = "Name"
         }
-        
         alertController.addTextField { textField in
             textField.placeholder = "Phone"
         }
@@ -43,13 +45,15 @@ class ViewController: UIViewController {
         let createButton = UIAlertAction(title: "Add", style: .default) { _ in
             guard let contactName = alertController.textFields?[0].text,
                   let contactPhone = alertController.textFields?[1].text else { return }
+            
             let contact = Contact(title: contactName, phone: contactPhone)
             self.contacts.append(contact)
             self.tableView.reloadData()
         }
+        
         let cancelButton = UIAlertAction(title: "Cancel", style: .cancel)
-        alertController.addAction(cancelButton)
         alertController.addAction(createButton)
+        alertController.addAction(cancelButton)
         
         self.present(alertController, animated: true)
     }
